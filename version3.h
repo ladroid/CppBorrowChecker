@@ -193,6 +193,36 @@ public:
   ~Ref() { borrow_checker_->remove_borrow(data_); }
 };
 
+template <typename T>
+class MutableRef {
+public:
+  constexpr MutableRef(T& object, BorrowChecker<T, 1>& checker) :
+    object_{object},
+    checker_{checker}
+  {
+    checker_.add_borrow(&object_, BorrowState::MutableBorrowed);
+  }
+
+  MutableRef(MutableRef const&) = delete;
+  MutableRef& operator=(MutableRef const&) = delete;
+
+  ~MutableRef() {
+    checker_.remove_borrow(&object_);
+  }
+
+  T& operator*() const {
+    return object_;
+  }
+
+  T* operator->() const {
+    return &object_;
+  }
+
+private:
+  T& object_;
+  BorrowChecker<T, 1>& checker_;
+};
+
 void start_v3() {
   // Allocate an int and create a BorrowChecker to track borrows.
   auto borrow_checker = std::make_unique<BorrowChecker<int, 3>>();
@@ -212,9 +242,19 @@ void start_v3() {
   Own<int, 3> new_own = std::move(own);
   std::cout << "New own value: " << *new_own << "\n";
 
-  // Attempt to create a new Ref and a new Own to the int and print the results.
-  Ref<int, 3> new_ref(ptr, borrow_checker.get());
-  std::cout << "New ref value: " << *new_ref << "\n";
-  Own<int, 3> new_own2(ptr, borrow_checker.get());
-  std::cout << "New own value: " << *new_own2 << "\n";
+  // // Attempt to create a new Ref and a new Own to the int and print the results.
+  // Ref<int, 3> new_ref(ptr, borrow_checker.get());
+  // std::cout << "New ref value: " << *new_ref << "\n";
+  // Own<int, 3> new_own2(ptr, borrow_checker.get());
+  // std::cout << "New own value: " << *new_own2 << "\n";
+
+  BorrowChecker<int, 1> checker;
+  int ptr1 = 42;
+  MutableRef<int> mutable_ref(ptr1, checker);
+  
+  // The following line is legal, because we have a mutable reference
+  std::cout << *mutable_ref;
+  
+  // The following line is illegal, because we already have a mutable reference
+  MutableRef<int> other_mutable_ref(ptr1, checker);
 }
