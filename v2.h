@@ -180,16 +180,9 @@ public:
 
 void start_v2() {
   BorrowChecker borrow_checker;
+  // Borrowing as immutable
   Own<int> my_int(new int(42), &borrow_checker);
   Ref<int> data_ref(my_int.get(), &borrow_checker);
-  std::cout << "Data (immutable):" << *data_ref << "\n";
-  // Borrowing as immutable
-  {
-    Own<int> my_int2(new int(52), &borrow_checker);
-    Ref<int> data_ref2(my_int.get(), &borrow_checker);
-    std::cout << "Data (immutable):" << *data_ref2 << "\n";
-    data_ref = std::move(data_ref2);
-  }
   std::cout << "Data (immutable):" << *data_ref << "\n";
 
   // Borrowing as mutable
@@ -201,6 +194,24 @@ void start_v2() {
       MutableRef<int> data_mut_ref(my_int.get(), &borrow_checker);
     } catch (const std::runtime_error &e) {
       std::cout << "Error: " << e.what() << "\n";
+    }
+  }
+
+  {
+    Own<int> my_int(new int(42), &borrow_checker);
+    {
+      Own<int> my_int2(std::move(my_int));
+      Ref<int> my_ref2(my_int2.get(), &borrow_checker);
+      try {
+        std::cout << "res: " << *my_ref2 << std::endl;
+      } catch (const std::runtime_error &e) {
+        std::cerr << e.what();
+      }
+    }
+    try {
+      Ref<int> my_ref(my_int.get(), &borrow_checker);
+    } catch (const std::runtime_error &e) {
+      std::cerr << e.what();
     }
   }
 }
