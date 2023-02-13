@@ -28,9 +28,7 @@ One tool the Rust compiler uses to ensure the memory safety of a program is its 
 
 ✅ Work with STL
 
-## ToDo List
-
-❎ Check lifetime object
+✅ Check lifetime object
 
 ## Usage
 
